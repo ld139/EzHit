@@ -359,43 +359,6 @@ The thresholds should be adjusted based on the dataset, model version, and valid
 
 ---
 
-## Mahalanobis-distance inference
-
-Mahalanobis-distance inference requires a `train_distribution_stat.pt` file generated from the same model architecture as the checkpoint used for prediction.
-
-The expected file contains:
-
-```python
-{
-    "mean": positive_class_latent_mean,
-    "inv_cov": inverse_covariance_matrix
-}
-```
-
-The latent dimension of `train_distribution_stat.pt` must match the hidden dimension of the model checkpoint. If the model is fine-tuned with a different hidden dimension, the training-distribution statistics must be regenerated.
-
-For very small fine-tuning datasets, Mahalanobis-distance estimates may be unstable and should be interpreted with caution.
-
----
-
-## Reaction SMILES format
-
-Reaction SMILES should follow the format:
-
-```text
-reactants>>products
-```
-
-Example:
-
-```text
-CCO>>CC=O
-```
-
-Rows with invalid reaction SMILES may fail during feature generation.
-
----
-
 ## Citation
 
 If you use EZHit in your research, please cite:
@@ -403,10 +366,9 @@ If you use EZHit in your research, please cite:
 ```bibtex
 @article{ezhit,
   title   = {Accurate and large-scale enzyme-reaction retrieval with sequence information},
-  author  = {To be added},
-  journal = {To be added},
-  year    = {To be added},
-  doi     = {To be added}
+  author  = {Ding Luo, Binju Wang},
+  journal = {Under Review},
+  year    = {2026},
 }
 ```
 
