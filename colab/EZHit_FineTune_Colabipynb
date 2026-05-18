@@ -2,7 +2,6 @@
   "cells": [
     {
       "cell_type": "markdown",
-      "id": "fab04343",
       "metadata": {},
       "source": [
         "# EZHit Fine-tuning Colab\n",
@@ -29,7 +28,6 @@
     },
     {
       "cell_type": "markdown",
-      "id": "4a120afc",
       "metadata": {},
       "source": [
         "## 1. Install dependencies and clone EZHit"
@@ -37,9 +35,8 @@
     },
     {
       "cell_type": "code",
-      "execution_count": null,
-      "id": "a7bddca3",
       "metadata": {},
+      "execution_count": null,
       "outputs": [],
       "source": [
         "# Colab setup\n",
@@ -51,6 +48,7 @@
         "REPO_URL = \"https://github.com/ld139/EzHit.git\"\n",
         "REPO_DIR = Path(\"/content/EzHit\")\n",
         "\n",
+        "# Re-clone the repository to avoid using an old cached version in /content/EzHit.\n",
         "if REPO_DIR.exists():\n",
         "    subprocess.run([\"rm\", \"-rf\", str(REPO_DIR)], check=True)\n",
         "\n",
@@ -59,48 +57,72 @@
         "\n",
         "print(\"Python version:\", sys.version)\n",
         "\n",
-        "print(\"Upgrading pip tooling...\")\n",
-        "subprocess.check_call([\n",
-        "    sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\",\n",
-        "    \"pip\", \"setuptools\", \"wheel\"\n",
-        "])\n",
+        "# Recent Colab runtimes may use Python 3.12.\n",
+        "# Key fix:\n",
+        "#   - Install maintained `rdkit` package, not `rdkit-pypi`.\n",
+        "#   - Install `drfp` with --no-deps to avoid its old rdkit-pypi dependency metadata.\n",
+        "#   - Keep NumPy < 2.1 to avoid conflicts with Colab packages such as numba.\n",
         "\n",
-        "print(\"Installing NumPy compatibility constraint...\")\n",
-        "subprocess.check_call([\n",
-        "    sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\", \"--no-cache-dir\",\n",
-        "    \"numpy>=1.26.4,<2.1\"\n",
-        "])\n",
+        "def run(cmd, title=None):\n",
+        "    if title:\n",
+        "        print(\"\\n\" + \"=\" * 80)\n",
+        "        print(title)\n",
+        "        print(\"=\" * 80)\n",
+        "    print(\" \".join(cmd))\n",
+        "    subprocess.check_call(cmd)\n",
         "\n",
-        "packages = [\n",
+        "run(\n",
+        "    [sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\", \"pip\", \"setuptools\", \"wheel\"],\n",
+        "    \"Upgrading pip tooling\"\n",
+        ")\n",
+        "\n",
+        "base_packages = [\n",
         "    \"numpy>=1.26.4,<2.1\",\n",
         "    \"pandas<2.3\",\n",
         "    \"scikit-learn<1.6\",\n",
+        "    \"scipy<1.14\",\n",
         "    \"tqdm\",\n",
         "    \"transformers>=4.38,<4.47\",\n",
         "    \"sentencepiece\",\n",
         "    \"huggingface_hub>=0.23\",\n",
-        "    \"drfp>=0.3.6,<0.4\",\n",
-        "    \"rdkit\",\n",
         "    \"matplotlib\",\n",
         "    \"ipywidgets\",\n",
+        "    \"rdkit\",\n",
         "]\n",
         "\n",
-        "print(\"Installing EZHit runtime dependencies...\")\n",
-        "subprocess.check_call([\n",
-        "    sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\", \"--no-cache-dir\"\n",
-        "] + packages)\n",
+        "run(\n",
+        "    [sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\", \"--no-cache-dir\"] + base_packages,\n",
+        "    \"Installing base dependencies and RDKit\"\n",
+        ")\n",
         "\n",
+        "# Install DRFP without dependency resolution because some DRFP releases still point to rdkit-pypi,\n",
+        "# which is not available for recent Python versions.\n",
+        "run(\n",
+        "    [sys.executable, \"-m\", \"pip\", \"install\", \"--upgrade\", \"--no-cache-dir\", \"--no-deps\", \"drfp==0.3.6\"],\n",
+        "    \"Installing DRFP without dependencies\"\n",
+        ")\n",
+        "\n",
+        "# Verify key imports.\n",
         "import numpy as np\n",
         "import pandas as pd\n",
         "import sklearn\n",
         "import rdkit\n",
-        "import drfp\n",
+        "from drfp import DrfpEncoder\n",
         "\n",
+        "# Quick DRFP smoke test\n",
+        "_ = DrfpEncoder.encode([\"CCO>>CC=O\"], n_folded_length=2048)\n",
+        "\n",
+        "print(\"\\nVersions:\")\n",
         "print(\"NumPy version:\", np.__version__)\n",
         "print(\"Pandas version:\", pd.__version__)\n",
         "print(\"scikit-learn version:\", sklearn.__version__)\n",
         "print(\"RDKit version:\", rdkit.__version__)\n",
-        "print(\"Setup complete.\")"
+        "print(\"DRFP import: OK\")\n",
+        "print(\"Setup complete.\")\n",
+        "\n",
+        "# If Colab had already imported an incompatible NumPy before this cell,\n",
+        "# restart the runtime once and rerun the notebook from the top:\n",
+        "# Runtime -> Restart runtime\n"
       ]
     },
     {
@@ -112,8 +134,8 @@
     },
     {
       "cell_type": "code",
-      "execution_count": null,
       "metadata": {},
+      "execution_count": null,
       "outputs": [],
       "source": [
         "import os\n",
@@ -667,8 +689,8 @@
     },
     {
       "cell_type": "code",
-      "execution_count": null,
       "metadata": {},
+      "execution_count": null,
       "outputs": [],
       "source": [
         "import ipywidgets as widgets\n",
@@ -783,8 +805,8 @@
     },
     {
       "cell_type": "code",
-      "execution_count": null,
       "metadata": {},
+      "execution_count": null,
       "outputs": [],
       "source": [
         "def run_ezhit_finetuning():\n",
@@ -1172,19 +1194,19 @@
     }
   ],
   "metadata": {
-    "accelerator": "GPU",
     "colab": {
-      "gpuType": "T4",
       "name": "EZHit_FineTune_Colab.ipynb",
-      "provenance": []
+      "provenance": [],
+      "gpuType": "T4"
     },
     "kernelspec": {
-      "display_name": "Python 3",
-      "name": "python3"
+      "name": "python3",
+      "display_name": "Python 3"
     },
     "language_info": {
       "name": "python"
-    }
+    },
+    "accelerator": "GPU"
   },
   "nbformat": 4,
   "nbformat_minor": 5
