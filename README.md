@@ -51,8 +51,6 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-The required `kan.py` implementation is included in this repository. No separate KAN package installation is required.
-
 ---
 
 ## Checkpoints and data
@@ -63,7 +61,6 @@ The required `kan.py` implementation is included in this repository. No separate
 | Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
 | Pretrained EZHit checkpoints | [deanluo/EzHit](https://huggingface.co/deanluo/EzHit) |
 | Large-scale screening results | [deanluo/EzHit-large-scale-screening](https://huggingface.co/datasets/deanluo/EzHit-large-scale-screening) |
-| Example fine-tuning dataset | To be added |
 | Full training data | To be added |
 
 To download released checkpoints:
@@ -173,13 +170,6 @@ python train_bn_kan.py \
     --seed 44
 ```
 
-Important notes:
-
-- `--pos_weight auto` automatically adjusts the binary classification loss according to the positive/negative ratio in the training set.
-- `--group_key CANO_RXN_SMILES` evaluates reaction-level ranking metrics by grouping candidates under each reaction.
-- `--standardize_smiles --uncharge --filter_charged_single_atom` should be used consistently with the feature-generation pipeline.
-- The checkpoint is selected according to `--select_metric`.
-
 ---
 
 ## Local fine-tuning
@@ -212,8 +202,6 @@ python finetune_bn.py \
     --pos_weight auto \
     --save_best_path checkpoints/ezhit_finetuned.pt
 ```
-
-The script loads a pretrained checkpoint and continues training on a user-provided dataset.
 
 ---
 
