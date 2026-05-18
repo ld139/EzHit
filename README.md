@@ -38,6 +38,13 @@ After fine-tuning, the exported checkpoint and `train_distribution_stat.pt` can 
 
 ## Installation
 
+Create and activate a conda environment with Python 3.8:
+
+```bash
+conda create -n ezhit python=3.8 -y
+conda activate ezhit
+```
+
 Clone this repository:
 
 ```bash
@@ -45,7 +52,7 @@ git clone https://github.com/ld139/EzHit.git
 cd EzHit
 ```
 
-Install the required dependencies:
+Install the required dependencies inside the `ezhit` environment:
 
 ```bash
 pip install -r requirements.txt
@@ -63,11 +70,10 @@ pip install -r requirements.txt
 | Large-scale screening results | [deanluo/EzHit-large-scale-screening](https://huggingface.co/datasets/deanluo/EzHit-large-scale-screening) |
 | Full training data | To be added |
 
-To download released checkpoints:
+
+To download released checkpoints after installing `requirements.txt`:
 
 ```bash
-pip install -U huggingface_hub
-
 hf download deanluo/EzHit \
     --include "checkpoints/*.pt" \
     --local-dir .
