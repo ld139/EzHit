@@ -81,56 +81,6 @@ checkpoints/
 
 ---
 
-## Input data format
-
-The fine-tuning or training dataset should be provided as a CSV file.
-
-Required columns:
-
-| Column | Description |
-|---|---|
-| `protein_sequence` | Enzyme amino-acid sequence |
-| `CANO_RXN_SMILES` | Reaction SMILES in `reactants>>products` format |
-| `Label` | Binary label. `1` for compatible enzyme-reaction pairs and `0` for negative pairs |
-
-Example:
-
-```csv
-protein_sequence,CANO_RXN_SMILES,Label
-MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAG,CCO>>CC=O,1
-MKKLLPTAAAGLLLLAAQPAMA,CCO>>CC=O,0
-```
-
-An optional `split` column can also be provided:
-
-| Column | Description |
-|---|---|
-| `split` | Dataset split. Allowed values: `train`, `val`, and `test` |
-
----
-
-## Feature caches for local training
-
-Local training with `train_bn_kan.py` expects precomputed row-aligned feature caches.
-
-| Cache | Description |
-|---|---|
-| Protein cache | Row-aligned ProtT5 protein embeddings |
-| DRFP cache | Row-aligned DRFP reaction fingerprints |
-| Reactant cache | Row-aligned reactant Morgan fingerprints |
-
-The feature rows must be aligned with the corresponding CSV rows.
-
-Recommended feature dimensions:
-
-| Feature | Dimension |
-|---|---:|
-| ProtT5 | 1024 |
-| DRFP | 2048 |
-| Reactant Morgan FP | 2048 |
-
----
-
 ## Local training from scratch
 
 EZHit can be trained locally using `train_bn_kan.py`.
