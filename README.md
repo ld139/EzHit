@@ -2,7 +2,7 @@
 
 **EZHit** is a lightweight enzyme-reaction retrieval framework for predicting potential catalytic compatibility between enzyme sequences and biochemical reactions.
 
-Given an enzyme amino-acid sequence and a reaction SMILES, EZHit estimates whether the enzyme is likely to catalyze the reaction. EZHit supports online prediction, custom fine-tuning, and uncertainty-aware inference using ensemble prediction and Mahalanobis-distance-based distribution assessment.
+Given an enzyme amino-acid sequence and a reaction SMILES, EZHit estimates whether the enzyme is likely to catalyze the reaction. EZHit supports online prediction, custom fine-tuning, local training, local inference, and uncertainty-aware inference using ensemble prediction and Mahalanobis-distance-based distribution assessment.
 
 ---
 
@@ -36,9 +36,57 @@ After fine-tuning, the exported checkpoint and `train_distribution_stat.pt` can 
 
 ---
 
+## Installation
+
+Clone this repository:
+
+```bash
+git clone https://github.com/ld139/EzHit.git
+cd EzHit
+```
+
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+The required `kan.py` implementation is included in this repository. No separate KAN package installation is required.
+
+---
+
+## Checkpoints and data
+
+| Resource | Link |
+|---|---|
+| HuggingFace Space | [Enzyme-Catalysis-Predictor](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor) |
+| Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
+| Pretrained EZHit checkpoints | [deanluo/EzHit](https://huggingface.co/deanluo/EzHit) |
+| Large-scale screening results | [deanluo/EzHit-large-scale-screening](https://huggingface.co/datasets/deanluo/EzHit-large-scale-screening) |
+| Example fine-tuning dataset | To be added |
+| Full training data | To be added |
+
+To download released checkpoints:
+
+```bash
+pip install -U huggingface_hub
+
+hf download deanluo/EzHit \
+    --include "checkpoints/*.pt" \
+    --local-dir .
+```
+
+The checkpoint files will be placed under:
+
+```text
+checkpoints/
+```
+
+---
+
 ## Input data format
 
-The fine-tuning dataset should be provided as a CSV file.
+The fine-tuning or training dataset should be provided as a CSV file.
 
 Required columns:
 
@@ -62,15 +110,207 @@ An optional `split` column can also be provided:
 |---|---|
 | `split` | Dataset split. Allowed values: `train`, `val`, and `test` |
 
-Example:
+---
 
-```csv
-protein_sequence,CANO_RXN_SMILES,Label,split
-MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAG,CCO>>CC=O,1,train
-MKKLLPTAAAGLLLLAAQPAMA,CCO>>CC=O,0,val
+## Feature caches for local training
+
+Local training with `train_bn_kan.py` expects precomputed row-aligned feature caches.
+
+| Cache | Description |
+|---|---|
+| Protein cache | Row-aligned ProtT5 protein embeddings |
+| DRFP cache | Row-aligned DRFP reaction fingerprints |
+| Reactant cache | Row-aligned reactant Morgan fingerprints |
+
+The feature rows must be aligned with the corresponding CSV rows.
+
+Recommended feature dimensions:
+
+| Feature | Dimension |
+|---|---:|
+| ProtT5 | 1024 |
+| DRFP | 2048 |
+| Reactant Morgan FP | 2048 |
+
+---
+
+## Local training from scratch
+
+EZHit can be trained locally using `train_bn_kan.py`.
+
+Example command:
+
+```bash
+python train_bn_kan.py \
+    --train_csv data/train.csv \
+    --val_csv data/valid.csv \
+    --test_csv data/Enzyme-405.csv \
+    --train_esm_cache caches/train_prott5_bf16.pt \
+    --val_esm_cache caches/valid_prott5_bf16.pt \
+    --test_esm_cache caches/Enzyme-405_bf16.pt \
+    --train_drfp_cache caches/train_drfp.pt \
+    --val_drfp_cache caches/valid_drfp.pt \
+    --test_drfp_cache caches/Enzyme-405_drfp.pt \
+    --train_reactant_cache caches/train_reactant_2048.pt \
+    --val_reactant_cache caches/valid_reactant_2048.pt \
+    --test_reactant_cache caches/Enzyme-405_reactant_2048.pt \
+    --group_key CANO_RXN_SMILES \
+    --rxn_col CANO_RXN_SMILES \
+    --label_col Label \
+    --standardize_smiles \
+    --uncharge \
+    --filter_charged_single_atom \
+    --fp_dim 2048 \
+    --reactant_fp_dim 2048 \
+    --hidden 512 \
+    --dropout 0.4 \
+    --epochs 30 \
+    --batch_size 2048 \
+    --lr 1e-4 \
+    --patience 5 \
+    --select_metric top10 \
+    --pos_weight auto \
+    --seed 44
 ```
 
-If no `split` column is provided, the Colab notebook will automatically generate train, validation, and test splits.
+Important notes:
+
+- `--pos_weight auto` automatically adjusts the binary classification loss according to the positive/negative ratio in the training set.
+- `--group_key CANO_RXN_SMILES` evaluates reaction-level ranking metrics by grouping candidates under each reaction.
+- `--standardize_smiles --uncharge --filter_charged_single_atom` should be used consistently with the feature-generation pipeline.
+- The checkpoint is selected according to `--select_metric`.
+
+---
+
+## Local fine-tuning
+
+EZHit can also be fine-tuned locally using `finetune_bn.py`.
+
+Example command:
+
+```bash
+python finetune_bn.py \
+    --pretrained_ckpt checkpoints/binarycls_best_val_seed40.pt \
+    --train_csv data/train.csv \
+    --val_csv data/val.csv \
+    --test_csv data/test.csv \
+    --train_esm_cache caches/train_protein.pt \
+    --val_esm_cache caches/val_protein.pt \
+    --test_esm_cache caches/test_protein.pt \
+    --train_drfp_cache caches/train_drfp.pt \
+    --val_drfp_cache caches/val_drfp.pt \
+    --test_drfp_cache caches/test_drfp.pt \
+    --train_reactant_cache caches/train_reactant_2048.pt \
+    --val_reactant_cache caches/val_reactant_2048.pt \
+    --test_reactant_cache caches/test_reactant_2048.pt \
+    --rxn_col CANO_RXN_SMILES \
+    --group_key CANO_RXN_SMILES \
+    --label_col Label \
+    --epochs 15 \
+    --batch_size 512 \
+    --lr 1e-4 \
+    --pos_weight auto \
+    --save_best_path checkpoints/ezhit_finetuned.pt
+```
+
+The script loads a pretrained checkpoint and continues training on a user-provided dataset.
+
+---
+
+## Local inference
+
+Local inference is provided through `predict.py`.
+
+The script can run either:
+
+1. single-pair prediction from command-line inputs, or
+2. batch prediction from a CSV file.
+
+It automatically computes:
+
+- ProtT5 protein embeddings
+- DRFP reaction fingerprints
+- reactant Morgan fingerprints
+- ensemble prediction probability
+- ensemble uncertainty
+- optional Mahalanobis distance if `train_distribution_stat.pt` is provided
+
+### Single-pair prediction
+
+```bash
+python predict.py \
+    --protein_sequence "MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAG" \
+    --rxn_smiles "CCO>>CC=O" \
+    --model_group general \
+    --seeds 40 41 42 43 44 \
+    --standardize_smiles \
+    --uncharge \
+    --filter_charged_single_atom \
+    --output_csv results/single_prediction.csv
+```
+
+### Batch prediction from CSV
+
+Prepare a CSV file:
+
+```csv
+protein_sequence,CANO_RXN_SMILES
+MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAG,CCO>>CC=O
+MKKLLPTAAAGLLLLAAQPAMA,CCO>>CC=O
+```
+
+Run prediction:
+
+```bash
+python predict.py \
+    --input_csv examples/predict_demo.csv \
+    --seq_col protein_sequence \
+    --rxn_col CANO_RXN_SMILES \
+    --model_group general \
+    --seeds 40 41 42 43 44 \
+    --standardize_smiles \
+    --uncharge \
+    --filter_charged_single_atom \
+    --output_csv results/predict_demo_output.csv
+```
+
+### Use local checkpoints
+
+By default, `predict.py` downloads checkpoints from [deanluo/EzHit](https://huggingface.co/deanluo/EzHit). To use local checkpoints:
+
+```bash
+python predict.py \
+    --input_csv examples/predict_demo.csv \
+    --ckpt_paths checkpoints/binarycls_best_val_seed40.pt checkpoints/binarycls_best_val_seed41.pt checkpoints/binarycls_best_val_seed42.pt checkpoints/binarycls_best_val_seed43.pt checkpoints/binarycls_best_val_seed44.pt \
+    --standardize_smiles \
+    --uncharge \
+    --filter_charged_single_atom \
+    --output_csv results/predict_demo_output.csv
+```
+
+### Mahalanobis-distance inference
+
+If a matching `train_distribution_stat.pt` file is available, pass it through `--maha_stat_path`:
+
+```bash
+python predict.py \
+    --input_csv examples/predict_demo.csv \
+    --ckpt_paths checkpoints/binarycls_best_val_seed40.pt checkpoints/binarycls_best_val_seed41.pt checkpoints/binarycls_best_val_seed42.pt checkpoints/binarycls_best_val_seed43.pt checkpoints/binarycls_best_val_seed44.pt \
+    --maha_stat_path train_distribution_stat.pt \
+    --standardize_smiles \
+    --uncharge \
+    --filter_charged_single_atom \
+    --output_csv results/predict_demo_with_maha.csv
+```
+
+The output CSV contains:
+
+| Column | Description |
+|---|---|
+| `EZHit_probability` | Mean ensemble match probability |
+| `EZHit_probability_std` | Standard deviation across ensemble checkpoints |
+| `EZHit_ensemble_MI` | Mutual-information-based ensemble uncertainty |
+| `Mahalanobis_Dist` | Optional latent-space Mahalanobis distance |
 
 ---
 
@@ -93,80 +333,6 @@ train_distribution_stat.pt
 ```
 
 The checkpoint stores the fine-tuned model weights. The `train_distribution_stat.pt` file stores latent-space statistics used for Mahalanobis-distance calculation.
-
----
-
-## Installation
-
-Clone this repository:
-
-```bash
-git clone https://github.com/ld139/EzHit.git
-cd EzHit
-```
-
-Install the required dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Checkpoints and data
-
-| Resource | Link |
-|---|---|
-| HuggingFace Space | [Enzyme-Catalysis-Predictor](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor) |
-| Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
-| Pretrained EZHit checkpoints | [EZHit_Checkpoints](https://huggingface.co/deanluo/EzHit) |
-| Large-scale screening results | [deanluo/EzHit-screening-results](https://huggingface.co/datasets/deanluo/EzHit-screening-results) |
-| Example fine-tuning dataset | To be added |
-| Full training data | To be added |
-
----
-
-## Local fine-tuning
-
-EZHit can also be fine-tuned locally using `finetune_bn.py`.
-
-Example command:
-
-```bash
-python finetune_bn.py \
-    --pretrained_ckpt checkpoints/binarycls_best_val_seed40.pt \
-    --train_csv data/train.csv \
-    --val_csv data/val.csv \
-    --test_csv data/test.csv \
-    --train_esm_cache cache/train_protein.pt \
-    --val_esm_cache cache/val_protein.pt \
-    --test_esm_cache cache/test_protein.pt \
-    --rxn_col CANO_RXN_SMILES \
-    --group_key CANO_RXN_SMILES \
-    --label_col Label \
-    --epochs 15 \
-    --batch_size 512 \
-    --lr 1e-4 \
-    --save_best_path checkpoints/ezhit_finetuned.pt
-```
-
-The script loads a pretrained checkpoint and continues training on the user-provided dataset.
-
----
-
-## Required files for local fine-tuning
-
-For local fine-tuning, users need to prepare:
-
-| File | Description |
-|---|---|
-| Training CSV | Training enzyme-reaction pairs |
-| Validation CSV | Validation enzyme-reaction pairs |
-| Test CSV | Optional test enzyme-reaction pairs |
-| Protein embedding cache | Row-aligned protein representation cache |
-| Pretrained checkpoint | EZHit pretrained model checkpoint |
-
-The Colab notebook provides a simpler workflow because it can generate the required feature files automatically.
 
 ---
 
@@ -229,7 +395,6 @@ CCO>>CC=O
 Rows with invalid reaction SMILES may fail during feature generation.
 
 ---
-
 
 ## Citation
 
