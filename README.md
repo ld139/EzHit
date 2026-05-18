@@ -1,16 +1,16 @@
-# EZHit
+# EzHit
 
-**EZHit** is a lightweight enzyme-reaction retrieval framework for predicting potential catalytic compatibility between enzyme sequences and biochemical reactions.
+**EzHit** is a lightweight enzyme-reaction retrieval framework for predicting potential catalytic compatibility between enzyme sequences and biochemical reactions.
 
-Given an enzyme amino-acid sequence and a reaction SMILES, EZHit estimates whether the enzyme is likely to catalyze the reaction. EZHit supports online prediction, custom fine-tuning, local training, local inference, and uncertainty-aware inference using ensemble prediction and Mahalanobis-distance-based distribution assessment.
+Given an enzyme amino-acid sequence and a reaction SMILES, EzHit estimates whether the enzyme is likely to catalyze the reaction. EzHit supports online prediction, custom fine-tuning, local training, local inference, and uncertainty-aware inference using ensemble prediction and Mahalanobis-distance-based distribution assessment.
 
 ---
 
 ## Online demo
 
-EZHit can be used directly through the HuggingFace Space:
+EzHit can be used directly through the HuggingFace Space:
 
-[Try EZHit on HuggingFace Space](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor)
+[Try EzHit on HuggingFace Space](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor)
 
 The web interface allows users to submit an enzyme sequence and a reaction SMILES and obtain prediction results through an interactive interface.
 
