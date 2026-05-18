@@ -111,25 +111,6 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-The required `kan.py` implementation is already included in the repository root directory. No separate KAN package installation is required.
-
----
-
-## Repository structure
-
-```text
-EzHit/
-├── README.md
-├── requirements.txt
-├── kan.py
-├── train_bn_kan.py
-├── finetune_bn.py
-└── colab/
-    └── EZHit_FineTune_Colab.ipynb
-```
-
-Large model checkpoints and datasets are not stored directly in this repository. They should be downloaded from the links provided below.
-
 ---
 
 ## Checkpoints and data
@@ -138,7 +119,7 @@ Large model checkpoints and datasets are not stored directly in this repository.
 |---|---|
 | HuggingFace Space | [Enzyme-Catalysis-Predictor](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor) |
 | Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
-| Pretrained EZHit checkpoints | To be added |
+| Pretrained EZHit checkpoints | [EZHit_Checkpoints](https://huggingface.co/deanluo/EzHit) |
 | Example fine-tuning dataset | To be added |
 | Full training data | To be added |
 
@@ -248,44 +229,6 @@ Rows with invalid reaction SMILES may fail during feature generation.
 
 ---
 
-## Common issues
-
-### RDKit installation error
-
-If RDKit installation fails with pip, installing it through conda may be more stable:
-
-```bash
-conda install -c conda-forge rdkit -y
-```
-
-### CUDA out-of-memory error
-
-Reduce the batch size:
-
-```bash
---batch_size 128
-```
-
-### Mahalanobis dimension mismatch
-
-Make sure the checkpoint and `train_distribution_stat.pt` were generated using the same model hidden dimension.
-
-For example, if the hidden dimension is 512:
-
-```text
-mean shape: [512]
-inv_cov shape: [512, 512]
-```
-
-### Invalid reaction SMILES
-
-Make sure the reaction is written as:
-
-```text
-reactants>>products
-```
-
----
 
 ## Citation
 
