@@ -1,4 +1,7 @@
 # EzHit
+<div align="center">
+<img src="./fig/toc.svg" width="600">
+</div>
 
 **EzHit** is a lightweight enzyme-reaction retrieval framework for predicting potential catalytic compatibility between enzyme sequences and biochemical reactions.
 
