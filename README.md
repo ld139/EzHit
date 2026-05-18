@@ -120,6 +120,7 @@ pip install -r requirements.txt
 | HuggingFace Space | [Enzyme-Catalysis-Predictor](https://huggingface.co/spaces/deanluo/Enzyme-Catalysis-Predictor) |
 | Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
 | Pretrained EZHit checkpoints | [EZHit_Checkpoints](https://huggingface.co/deanluo/EzHit) |
+| Large-scale screening results | [deanluo/EzHit-screening-results](https://huggingface.co/datasets/deanluo/EzHit-screening-results) |
 | Example fine-tuning dataset | To be added |
 | Full training data | To be added |
 
