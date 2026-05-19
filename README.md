@@ -71,7 +71,7 @@ pip install -r requirements.txt
 | Colab notebook | [EZHit_FineTune_Colab.ipynb](https://colab.research.google.com/github/ld139/EzHit/blob/main/colab/EZHit_FineTune_Colab.ipynb) |
 | Pretrained EZHit checkpoints | [deanluo/EzHit](https://huggingface.co/deanluo/EzHit) |
 | Large-scale screening results | [deanluo/EzHit-large-scale-screening](https://huggingface.co/datasets/deanluo/EzHit-large-scale-screening) |
-| Full training data | To be added |
+| Full training data | [Zenodo](https://doi.org/10.5281/zenodo.20278477) |
 
 
 To download released checkpoints after installing `requirements.txt`:
